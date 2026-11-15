@@ -122,6 +122,28 @@ class TrapezoidalEuler(Solver):
             self.us[i,:] = self.u
         return self.us
 
+class RK4(Solver):
+    def __init__(self, ivp, N):
+        super().__init__(ivp, N)
+
+    def step(self, tn, un):
+        h = self.h
+
+        ivp = self.ivp
+        Y1 = ivp.f(tn, un)
+        Y2 = ivp.f(tn + h/2, un + h/2*Y1)
+        Y3 = ivp.f(tn + h/2, un + h/2*Y2)
+        Y4 = ivp.f(tn + h, un + h*Y3)
+        
+        return un + h/6 * (Y1 + 2*Y2 + 2*Y3 + Y4)
+
+    def integrate(self):
+        self.us[0,:] = self.u
+        for i in range(1, self.N+1):
+            self.u = self.step(self.grid[i], self.u)
+            self.us[i,:] = self.u
+        return self.us
+
 ### EVALUATOR CLASSES ###
 
 class Evaluator():
