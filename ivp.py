@@ -70,6 +70,13 @@ class ExplicitEuler(Solver):
         return self.us
 
 class ImplicitEuler(Solver):
+    """
+    ## Description
+
+    Only setup to work with the Linear Test Equation (LTE) class. Uses the linear system
+    `A` directly to compute the next step.
+    """
+
     def __init__(self, ivp, N):
         super().__init__(ivp, N)
 
@@ -95,6 +102,11 @@ class ImplicitEuler(Solver):
 
 class TrapezoidalEuler(Solver):
     """
+    ## Description
+
+    Only setup to work with the Linear Test Equation (LTE) class. Uses the linear system
+    `A` directly to compute the next step.
+    
     Note: Using LU decomp provided a speedup of slightly over 2x.
     """
 
