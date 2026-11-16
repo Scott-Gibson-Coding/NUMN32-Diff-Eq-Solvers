@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import scipy.linalg as sp_alg
 
@@ -33,6 +34,30 @@ class LTE(IVP):
     def exact(self, t):
         # Compute e^(tA)*y0
         return sp_alg.expm(t*self.A) @ self.y0
+
+class LotkaVolterra(IVP):
+    def __init__(self, t0, T, y0, a, b, c, d):
+        # Lotka-Volterra is R2 -> R2, so y0 should be a 2-vector
+        super().__init__(t0, T, y0)
+        self.a = a
+        self.b = b
+        self.c = c
+        self.d = d
+
+    def f(self, t, y):
+        a, b, c, d = self.a, self.b, self.c, self.d
+        u0 = a*y[0] - b*y[0]*y[1]
+        u1 = c*y[0]*y[1] - d*y[1]
+        return np.array([u0, u1])
+
+    def exact(self, t):
+        pass
+
+    def H(self, u):
+        # Invariant function among solutions
+        a, b, c, d = self.a, self.b, self.c, self.d
+        x, y = u[0], u[1]
+        return c*x + b*y - d*math.log(x) - a*math.log(y)
 
 ### SOLVER CLASSES ###
 
@@ -229,6 +254,9 @@ class RK34(Solver):
                 self.h = tn - self.grid[-1]
 
             # Perform step
+            # TODO It seems as though I'm passing u_{n-1}, t_{n} to the step function. This may not
+            # be correct, and also may be implemented incorrectly in my other solvers. Solutions are
+            # looking good, but this may be a technically incorrect approach.
             self.u = self.step(tn, self.u)
             self.grid.append(tn)
             self.us.append(self.u)

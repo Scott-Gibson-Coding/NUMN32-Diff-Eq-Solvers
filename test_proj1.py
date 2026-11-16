@@ -158,3 +158,124 @@ def test_RK34_LTE_2x2():
     
     plt.legend(loc="upper right")
     plt.show()
+
+
+### The nonstiff Lotka-Volterra problem (population dynamics)
+
+def test_lotka_is_periodic():
+    a, b, c, d = 3, 9, 15, 15
+    y0 = np.array([1.5, 0.2])
+    t0, T = 0, 12
+    ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
+
+    tol = 1e-8
+
+    fig1, ax1 = setup_plot(
+        title=f"Lotka Volterra - x/y vs time\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="t",
+        ylabel="x/y",
+    )
+    fig2, ax2 = setup_plot(
+        title="Lotka Volterra - x vs y\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="x",
+        ylabel="y"
+    )
+
+    solver = RK34(ivp=ivp, tol=tol)
+    us = solver.integrate()
+    grid = solver.grid
+
+    # Draw x/y vs time
+    plot_args = {
+        "linestyle": "-",
+        "alpha": 0.8,
+    }
+    ax1.plot(grid, us[:,0], label="x", **plot_args)
+    ax1.plot(grid, us[:,1], label="y", **plot_args)
+
+    # Draw x vs y
+    ax2.plot(us[:,0], us[:,1], label=f"Solver: RK34 - Tol={tol:.3e}")
+
+    fig1.legend(loc="upper right")
+    fig2.legend(loc="upper right")
+    plt.show()
+
+def test_lotka_1000_cycles():
+    a, b, c, d = 3, 9, 15, 15
+    y0 = np.array([1.5, 0.4])
+    t0, T = 0, 1200
+    ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
+
+    tol = 1e-8
+
+    fig1, ax1 = setup_plot(
+        title=f"Lotka Volterra - x/y vs time\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="t",
+        ylabel="x/y",
+    )
+    fig2, ax2 = setup_plot(
+        title="Lotka Volterra - x vs y\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="x",
+        ylabel="y"
+    )
+
+    solver = RK34(ivp=ivp, tol=tol)
+    us = solver.integrate()
+    grid = solver.grid
+
+    # Draw x/y vs time
+    plot_args = {
+        "linestyle": "-",
+        "alpha": 0.8,
+    }
+    ax1.semilogx(grid, us[:,0], label="x", **plot_args)
+    ax1.semilogx(grid, us[:,1], label="y", **plot_args)
+
+    # Draw x vs y
+    ax2.plot(us[:,0], us[:,1], label=f"Solver: RK34 - Tol={tol:.3e}")
+
+    fig1.legend(loc="upper right")
+    fig2.legend(loc="upper right")
+    plt.show()
+
+def test_lotka_stays_near_initial_value():
+    a, b, c, d = 3, 9, 15, 15
+    y0 = np.array([1.5, 0.4])
+    t0, T = 0, 8000
+    ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
+
+    tol = 1e-8
+
+    fig1, ax1 = setup_plot(
+        title=f"Lotka Volterra - |H(x, y)/H(x0, y0) - 1| vs time\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="t",
+        ylabel="|H(x, y)/H(x0, y0) - 1|",
+    )
+    fig2, ax2 = setup_plot(
+        title=f"Lotka Volterra - H(x, y) vs time\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="t",
+        ylabel="H(x, y)",
+    )
+
+    solver = RK34(ivp=ivp, tol=tol)
+    us = solver.integrate()
+    grid = solver.grid
+
+    H0 = ivp.H(y0)
+    Hs = [ivp.H(u) for u in us]
+    H_deltas = [abs(ivp.H(u)/H0 - 1) for u in us]
+
+    # Draw x/y vs time
+    plot_args = {
+        "linestyle": "-",
+        "alpha": 0.8,
+    }
+    ax1.loglog(grid[1:], H_deltas[1:], **plot_args)
+    ax2.plot(grid[1:], Hs[1:], **plot_args)
+
+    plt.show()
+
+
+# The Van der Pol equation (elictric oscillator circuit)
+def test_van_der_pol():
+    pass
