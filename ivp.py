@@ -181,7 +181,7 @@ class RK34(Solver):
         # TODO What is the purpose of `N` in an adaptive solver?
         super().__init__(ivp=ivp, N=100, tol=tol, adaptive=True)
 
-        self.k = 3 # Order of convergence
+        self.k = 4 # Order of convergence
         self.errest = None # Current local error
         self.errestold = self.tol # Last step local error
 
@@ -189,12 +189,15 @@ class RK34(Solver):
         self.h = np.abs(self.ivp.T - self.ivp.t0)*(self.tol**(1/self.k))/(100*(1+np.linalg.norm(self.ivp.f(self.ivp.t0,self.ivp.y0))))
 
     def newstep(self):
+        tol = self.tol
         k = self.k
         hn = self.h
         e = self.errest
         e_prev = self.errestold
-        
-        return hn + (self.ivp.T - self.ivp.t0) / self.N
+
+        fir = pow(tol/e, 2/(3*k))
+        sec = pow(tol/e_prev, -1/(3*k))
+        return fir * sec * hn
 
     def step(self, tn, un):
         h = self.h
@@ -207,7 +210,7 @@ class RK34(Solver):
         Y4 = ivp.f(tn + h, un + h*Y3)
 
         # Store local error compared to RK4 using 2-norm: l_{n+1}
-        self.errest = h/6*(2*Y2 + Z3 - 2*Y3 - Y4)
+        self.errest = np.linalg.norm(h/6*(2*Y2 + Z3 - 2*Y3 - Y4))
         
         return un + h/6 * (Y1 + 4*Y2 + Z3)
 

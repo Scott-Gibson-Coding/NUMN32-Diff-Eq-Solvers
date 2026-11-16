@@ -102,9 +102,7 @@ def test_RK34_LTE_scalar():
     y0 = np.array([2])
     A = np.array([[-1]])
     ivp = LTE(t0=0, T=1, y0=y0, A=A)
-    tol=1e-4
-
-    solver = RK34(ivp=ivp, tol=tol)
+    tols=[1e-2, 1e-4, 1e-6, 1e-8, 1e-10]
 
     fig, ax = setup_plot(
         title="RK34 on Scalar LTE",
@@ -112,14 +110,17 @@ def test_RK34_LTE_scalar():
         ylabel="y"
     )
 
-    us = solver.integrate()
-    grid = solver.grid
+    for tol in tols:
+        solver = RK34(ivp=ivp, tol=tol)
+
+        us = solver.integrate()
+        grid = solver.grid
+
+        ax.plot(grid, us, linestyle="--", label=f"RK34 tol={tol:.3e} ({grid.shape[0]})")
 
     ts = np.linspace(ivp.t0, ivp.T, 100)
     ys = np.array([ivp.exact(t) for t in ts])
-
-    ax.plot(ts, ys, linestyle="-", label=f"Exact Solution")
-    ax.plot(grid, us, linestyle="--", label=f"RK34 tol={tol:.3e}")
+    ax.plot(ts, ys, color="black", alpha=0.5, linestyle="-", label=f"Exact Solution")
     
     plt.legend(loc="upper right")
     plt.show()
@@ -135,8 +136,7 @@ def test_RK34_LTE_2x2():
     A = np.array([[-1, 1], [1, -3]])
     ivp = LTE(0, 1, y0, A=A)
 
-    tol=1e-4
-    solver = RK34(ivp=ivp, tol=tol)
+    tols=[1e-2, 1e-4, 1e-6, 1e-8, 1e-10]
 
     fig, ax = setup_plot(
         title="RK34 on 2x2 LTE",
@@ -144,14 +144,17 @@ def test_RK34_LTE_2x2():
         ylabel="y[1]"
     )
 
-    us = solver.integrate()
-    grid = solver.grid
+    for tol in tols:
+        solver = RK34(ivp=ivp, tol=tol)
 
-    ts = np.linspace(ivp.t0, ivp.T, 100)
+        us = solver.integrate()
+        grid = solver.grid
+
+        ax.plot(us[:,0], us[:,1], linestyle="--", label=f"RK34 tol={tol:.3e} ({grid.shape[0]})")
+
+    ts = np.linspace(ivp.t0, ivp.T, 400)
     ys = np.array([ivp.exact(t) for t in ts])
-
-    ax.plot(ys[:,0], ys[:,1], linestyle="-", label=f"Exact Solution")
-    ax.plot(us[:,0], us[:,1], linestyle="--", label=f"RK34 tol={tol:.3e}")
+    ax.plot(ys[:,0], ys[:,1], color="black", alpha=0.5, linestyle="-", label=f"Exact Solution")
     
     plt.legend(loc="upper right")
     plt.show()
