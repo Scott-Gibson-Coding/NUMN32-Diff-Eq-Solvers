@@ -38,13 +38,33 @@ class LTE(IVP):
 
 class Solver():
     # Handles the time-stepping process, given an IVP instance
-    def __init__(self, ivp: IVP, N: int):
-        self.ivp = ivp
-        self.u = ivp.y0
-        self.N = N
-        self.h = (ivp.T - ivp.t0) / N
-        self.grid = np.linspace(ivp.t0, ivp.T, N + 1)
-        self.us = np.zeros((N+1, ivp.y0.shape[0]))
+    def __init__(self, ivp: IVP, N: int, tol: float = 1e-4, adaptive: bool = False):
+        self.ivp = ivp # Initial value problem
+        self.u = ivp.y0 # Current step approximation
+        self.N = N # Discretization intervals
+        self.h = (ivp.T - ivp.t0) / N # Interval length for a fixed grid
+        self.tol = tol # Goal error tolerance
+        self.adaptive = adaptive # Set to False to ensure a fixed grid
+
+        if not adaptive:
+            # Fixed grid size
+            self.grid = np.linspace(ivp.t0, ivp.T, N + 1)
+            self.us = np.zeros((N+1, ivp.y0.shape[0]))
+        else:
+            # Adaptive grid size, populated during integration.
+            # Note: At the end of integration, transform the grid and us into numpy arrays
+            # matching how they'd behave in a non-adaptive solver.
+            self.grid = []
+            self.us = []
+
+
+    def newstep(self, k, hn, errest, errestold):
+        # Compute the next step size based on the current and previous local error.
+        # Param `k`: Expected order of convergence: O(h^k)
+        # Param `hn`: The current step size
+        # Param `errest`: The current local error
+        # Param `errestold`: The prior step local error
+        raise NotImplementedError("Subclasses should implement this function!")
 
     def step(self, tn, un):
         # Compute the next estimate from the prior step
@@ -157,8 +177,24 @@ class RK4(Solver):
         return self.us
 
 class RK34(Solver):
-    def __init__(self, ivp, N):
-        super().__init__(ivp, N)
+    def __init__(self, ivp: IVP, tol: float = 1e-4):
+        # TODO What is the purpose of `N` in an adaptive solver?
+        super().__init__(ivp=ivp, N=100, tol=tol, adaptive=True)
+
+        self.k = 3 # Order of convergence
+        self.errest = None # Current local error
+        self.errestold = self.tol # Last step local error
+
+        # Compute starting step size
+        self.h = np.abs(self.ivp.T - self.ivp.t0)*(self.tol**(1/self.k))/(100*(1+np.linalg.norm(self.ivp.f(self.ivp.t0,self.ivp.y0))))
+
+    def newstep(self):
+        k = self.k
+        hn = self.h
+        e = self.errest
+        e_prev = self.errestold
+        
+        return hn + (self.ivp.T - self.ivp.t0) / self.N
 
     def step(self, tn, un):
         h = self.h
@@ -176,10 +212,30 @@ class RK34(Solver):
         return un + h/6 * (Y1 + 4*Y2 + Z3)
 
     def integrate(self):
-        self.us[0,:] = self.u
-        for i in range(1, self.N+1):
-            self.u = self.step(self.grid[i], self.u)
-            self.us[i,:] = self.u
+        tn = self.ivp.t0
+        
+        # Init grid and us with starting point
+        self.grid.append(tn)
+        self.us.append(self.u)
+
+        # Loop until you hit T
+        while tn < self.ivp.T:
+            # Increment tn by h, "clamp by T" and update h if needed
+            tn = min(tn + self.h, self.ivp.T)
+            if tn - self.grid[-1] < self.h:
+                self.h = tn - self.grid[-1]
+
+            # Perform step
+            self.u = self.step(tn, self.u)
+            self.grid.append(tn)
+            self.us.append(self.u)
+
+            # Update h
+            self.h = self.newstep()
+
+        # Convert the dynamic grid and us to static np arrays
+        self.grid = np.array(self.grid)
+        self.us = np.vstack(self.us)
         return self.us
 
 ### EVALUATOR CLASSES ###

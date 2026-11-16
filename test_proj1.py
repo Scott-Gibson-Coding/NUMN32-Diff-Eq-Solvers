@@ -12,6 +12,9 @@ from ivp import *
 from ivp_run import *
 from plot import setup_plot
 
+
+### Test RK4 explicit solver
+
 def test_compare_RK4_method():
     """
     ## Scenario
@@ -84,4 +87,71 @@ def test_verify_RK4_error_growth():
         **kwargs,
     )
     
+    plt.show()
+
+
+### Test RK34 adapative solver
+
+def test_RK34_LTE_scalar():
+    """
+    ## Scenario
+
+    Test the err increase is bounded by the tolerance
+    """
+
+    y0 = np.array([2])
+    A = np.array([[-1]])
+    ivp = LTE(t0=0, T=1, y0=y0, A=A)
+    tol=1e-4
+
+    solver = RK34(ivp=ivp, tol=tol)
+
+    fig, ax = setup_plot(
+        title="RK34 on Scalar LTE",
+        xlabel="t",
+        ylabel="y"
+    )
+
+    us = solver.integrate()
+    grid = solver.grid
+
+    ts = np.linspace(ivp.t0, ivp.T, 100)
+    ys = np.array([ivp.exact(t) for t in ts])
+
+    ax.plot(ts, ys, linestyle="-", label=f"Exact Solution")
+    ax.plot(grid, us, linestyle="--", label=f"RK34 tol={tol:.3e}")
+    
+    plt.legend(loc="upper right")
+    plt.show()
+
+def test_RK34_LTE_2x2():
+    """
+    ## Scenario
+
+    Test the err increase is bounded by the tolerance
+    """
+
+    y0 = np.array([1, 2])
+    A = np.array([[-1, 1], [1, -3]])
+    ivp = LTE(0, 1, y0, A=A)
+
+    tol=1e-4
+    solver = RK34(ivp=ivp, tol=tol)
+
+    fig, ax = setup_plot(
+        title="RK34 on 2x2 LTE",
+        xlabel="y[0]",
+        ylabel="y[1]"
+    )
+
+    us = solver.integrate()
+    grid = solver.grid
+
+    ts = np.linspace(ivp.t0, ivp.T, 100)
+    ys = np.array([ivp.exact(t) for t in ts])
+
+    ax.plot(ys[:,0], ys[:,1], linestyle="-", label=f"Exact Solution")
+    ax.plot(us[:,0], us[:,1], linestyle="--", label=f"RK34 tol={tol:.3e}")
+    
+    plt.legend(loc="upper right")
     plt.show()
