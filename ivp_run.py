@@ -95,7 +95,7 @@ def run_ivp_methods(
             ax.plot(solver.grid, solver.us, color=color, linestyle="--", alpha=0.5, label=label)
         elif y_dim == 2:
             # Draw y0 vs y1
-            ax.plot(solver.us[:,0], solver.us[:,1], color=color, linestyle="--", alpha=0.5, label=label)
+            ax.plot(solver.us[:,0], solver.us[:,1], color=color, linestyle="--", alpha=1, label=label)
         else:
             # Draw time vs y0
             ax.plot(solver.grid, solver.us[:,0], color=color, linestyle="--", alpha=0.5, label=label)
@@ -111,13 +111,11 @@ def run_ivp_methods(
             ax.plot(exact_sol[:,0], exact_sol[:,1], color="gray", alpha=0.7, label=label)
             # Draw a dot at the start point
             start_x, start_y = exact_sol[0,0], exact_sol[0,1]
-            ax.scatter(start_x, start_y, color="red", s=20, zorder=5)
+            ax.scatter(start_x, start_y, color="gray", s=20, zorder=5)
             ax.text(start_x+0.01, start_y+0.01, "y(t0)")
         else:
             # Draw time vs y0
             ax.plot(solver.grid, exact_sol[:,0], color="gray", alpha=0.7, label=label)
-
-    fig.legend(loc="upper right")
 
 def run_mult_ivp_method(
         fig_ax: tuple[plt.Figure, plt.Axes],
@@ -218,8 +216,6 @@ def run_err_methods_vs_time(
 
         ax.semilogy(grid, errs, color=color, linestyle=linestyle, alpha=0.6, label=label)
 
-    fig.legend(loc="upper right")
-
 def run_err_ivps_vs_time(
         fig_ax: tuple[plt.Figure, plt.Axes],
         Method: type[Solver] = ExplicitEuler,
@@ -312,8 +308,6 @@ def run_err_methods_vs_h(
                 linestyle = "--"
                 
         ax.loglog(grid, errs, color=color, linestyle=linestyle, alpha=0.6, label=label)
-
-    fig.legend(loc="upper right")
 
 def run_err_ivps_vs_h(
         fig_ax: tuple[plt.Figure, plt.Axes],

@@ -29,7 +29,7 @@ def test_compare_RK4_method():
     Methods = [ExplicitEuler, RK4]
 
     fig, ax = setup_plot(
-        title="Method Comparison: 2x2 Case",
+        title="LTE - 2d Phase Portrait",
     )
 
     run_ivp_methods(
@@ -40,6 +40,7 @@ def test_compare_RK4_method():
         include_exact=True,
     )
 
+    ax.legend(loc="upper left")
     plt.show()
 
 def test_verify_RK4_error_growth():
@@ -62,10 +63,10 @@ def test_verify_RK4_error_growth():
     Methods = [TrapezoidalEuler, RK4]
 
     fig1, ax1 = setup_plot(
-        title=f"Absolute Errors vs h - Multiple Scalar Cases",
+        title=f"Absolute Errors vs h - LTE Method Comparison",
     )
     fig2, ax2 = setup_plot(
-        title=f"Relative Errors vs h - Multiple Scalar Cases",
+        title=f"Relative Errors vs h - LTE Method Comparison",
     )
 
     kwargs = {
@@ -87,7 +88,9 @@ def test_verify_RK4_error_growth():
         **kwargs,
     )
 
-    plt.grid(True, axis="y")
+    ax1.legend(loc="upper left")
+    ax2.legend(loc="upper left")
+
     plt.show()
 
 
