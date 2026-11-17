@@ -50,14 +50,23 @@ class LotkaVolterra(IVP):
         u1 = c*y[0]*y[1] - d*y[1]
         return np.array([u0, u1])
 
-    def exact(self, t):
-        pass
-
     def H(self, u):
         # Invariant function among solutions
         a, b, c, d = self.a, self.b, self.c, self.d
         x, y = u[0], u[1]
         return c*x + b*y - d*math.log(x) - a*math.log(y)
+
+class VanderPol(IVP):
+    def __init__(self, t0, T, y0, mu):
+        # Vanderpol is also R2 -> R2, y0 should be a 2-vector
+        super().__init__(t0, T, y0)
+        self.mu = mu
+
+    def f(self, t, y):
+        mu = self.mu
+        u0 = y[1]
+        u1 = mu*(1 - y[0]**2)*y[1] - y[0]
+        return np.array([u0, u1])
 
 ### SOLVER CLASSES ###
 

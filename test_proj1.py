@@ -277,5 +277,107 @@ def test_lotka_stays_near_initial_value():
 
 
 # The Van der Pol equation (elictric oscillator circuit)
-def test_van_der_pol():
-    pass
+def test_van_der_pol_mu_100():
+    y0 = np.array([2, 0])
+    mu = 100
+    t0, T = 0, 2*mu
+    ivp = VanderPol(t0=t0, T=T, y0=y0, mu=mu)
+
+    tol = 1e-8
+
+    fig1, ax1 = setup_plot(
+        title=f"Van der Pol - Solution Component vs Time\n{mu=}",
+        xlabel="t",
+        ylabel="y[1]",
+    )
+    fig2, ax2 = setup_plot(
+        title=f"Van der Pol - Phase Portrait\n{mu=}",
+        xlabel="y[0]",
+        ylabel="y[1]",
+    )
+    fig3, ax3 = setup_plot(
+        title=f"Van der Pol - Step Sizes\n{mu=}",
+        xlabel="t",
+        ylabel="step (h)",
+    )
+
+    solver = RK34(ivp=ivp, tol=tol)
+    us = solver.integrate()
+    grid = solver.grid
+
+    plot_args = {
+        "linestyle": "-",
+        "alpha": 0.8,
+    }
+    ax1.plot(grid, us[:,1], **plot_args)
+    ax2.plot(us[:,0], us[:,1], **plot_args)
+
+    step_sizes = np.diff(grid)
+    ax3.semilogy(grid[:-1], step_sizes, **plot_args)
+
+    plt.show()
+
+def test_van_der_pol_stable_orbits():
+    y0s = [
+        np.array([2, 0]),
+        np.array([1, 1]),
+        np.array([-3, 4]),
+        np.array([5, 7]),
+        np.array([0, -2]),
+    ]
+    
+    mu = 100
+    t0, T = 0, 16*mu # Increased interval since some (e.g. [5, 7]) take longer to settle into a cycle
+
+    tol = 1e-8
+
+    plot_args = {
+        "linestyle": "--",
+        "alpha": 0.4,
+    }
+
+    for y0 in y0s:
+        fig, ax = setup_plot(
+            title=f"Van der Pol - Comparing initial conditions\n{y0=}",
+            xlabel="y[0]",
+            ylabel="y[1]",
+        )
+        
+        ivp = VanderPol(t0=t0, T=T, y0=y0, mu=mu)
+        solver = RK34(ivp=ivp, tol=tol)
+        us = solver.integrate()
+
+        ax.scatter(y0[0], y0[1], color="red", s=20, zorder=5)
+        ax.plot(us[:,0], us[:,1], **plot_args)
+
+    plt.show()
+
+def test_van_der_pol_stiffness():
+    y0 = np.array([2, 0])
+    mus = [10, 15, 22, 33, 47, 68, 100, 150, 220, 330, 470, 680, 1000]
+    
+    tol = 1e-8
+
+    fig, ax = setup_plot(
+        title=f"Van der Pol - Comparing stiffness with μ",
+        xlabel="μ",
+        ylabel="Number of steps",
+    )
+
+    plot_args = {
+        "linestyle": "-",
+        "alpha": 1,
+    }
+
+    Ns = []
+    for mu in mus:
+        t0, T = 0, 0.7*mu
+        ivp = VanderPol(t0=t0, T=T, y0=y0, mu=mu)
+        solver = RK34(ivp=ivp, tol=tol)
+        us = solver.integrate()
+        print(mu, us[-1])
+        Ns.append(us.shape[0])
+
+    ax.loglog(mus, Ns, **plot_args)
+
+    plt.show()
