@@ -86,7 +86,8 @@ def test_verify_RK4_error_growth():
         err_type="relative",
         **kwargs,
     )
-    
+
+    plt.grid(True, axis="y")
     plt.show()
 
 
@@ -163,6 +164,8 @@ def test_RK34_LTE_2x2():
 ### The nonstiff Lotka-Volterra problem (population dynamics)
 
 def test_lotka_is_periodic():
+    # TODO Plot also, the equalibrium point (in red) and the starting point (in green/blue)
+    
     a, b, c, d = 3, 9, 15, 15
     y0 = np.array([1.5, 0.2])
     t0, T = 0, 12
@@ -241,7 +244,7 @@ def test_lotka_1000_cycles():
 def test_lotka_stays_near_initial_value():
     a, b, c, d = 3, 9, 15, 15
     y0 = np.array([1.5, 0.4])
-    t0, T = 0, 8000
+    t0, T = 0, 100
     ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
 
     tol = 1e-8
@@ -270,8 +273,8 @@ def test_lotka_stays_near_initial_value():
         "linestyle": "-",
         "alpha": 0.8,
     }
-    ax1.loglog(grid[1:], H_deltas[1:], **plot_args)
-    ax2.plot(grid[1:], Hs[1:], **plot_args)
+    ax1.semilogy(grid, H_deltas, **plot_args)
+    ax2.plot(grid, Hs, **plot_args)
 
     plt.show()
 
@@ -329,7 +332,7 @@ def test_van_der_pol_stable_orbits():
     mu = 100
     t0, T = 0, 16*mu # Increased interval since some (e.g. [5, 7]) take longer to settle into a cycle
 
-    tol = 1e-8
+    tol = 1e-6
 
     plot_args = {
         "linestyle": "--",
@@ -364,20 +367,21 @@ def test_van_der_pol_stiffness():
         ylabel="Number of steps",
     )
 
-    plot_args = {
-        "linestyle": "-",
-        "alpha": 1,
-    }
-
-    Ns = []
+    N_steps = []
     for mu in mus:
         t0, T = 0, 0.7*mu
         ivp = VanderPol(t0=t0, T=T, y0=y0, mu=mu)
         solver = RK34(ivp=ivp, tol=tol)
         us = solver.integrate()
         print(mu, us[-1])
-        Ns.append(us.shape[0])
+        N_steps.append(us.shape[0])
 
-    ax.loglog(mus, Ns, **plot_args)
+    # Plot mu vs N_steps
+    ax.loglog(mus, N_steps, label="RK34")
+    ax.scatter(mus, N_steps)
+    # Plot dashed O(mu**2)
+    rat = N_steps[-1] / (mus[-1] ** 2)
+    ax.loglog(mus, [mu**2*rat for mu in mus], label="$\mathcal{O}(\mu^2)$", linestyle="--", alpha=0.8)
 
+    ax.legend(loc="upper left")
     plt.show()

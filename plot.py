@@ -55,6 +55,6 @@ def setup_plot(
         ax.axvline(0, color='black', linewidth=1.2)
 
     # Draw light grid lines
-    ax.grid(True, linestyle="--", color="gray", alpha=0.2)
+    ax.grid(True, "both", linestyle="--", color="gray", alpha=0.4)
     
     return fig, ax

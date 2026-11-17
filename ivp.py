@@ -54,7 +54,7 @@ class LotkaVolterra(IVP):
         # Invariant function among solutions
         a, b, c, d = self.a, self.b, self.c, self.d
         x, y = u[0], u[1]
-        return c*x + b*y - d*math.log(x) - a*math.log(y)
+        return c*x + b*y - d*np.log(x) - a*np.log(y)
 
 class VanderPol(IVP):
     def __init__(self, t0, T, y0, mu):
@@ -72,6 +72,7 @@ class VanderPol(IVP):
 
 class Solver():
     # Handles the time-stepping process, given an IVP instance
+    # TODO Default N to a value like 100, so that adaptive grid sizes do not need to specify one.
     def __init__(self, ivp: IVP, N: int, tol: float = 1e-4, adaptive: bool = False):
         self.ivp = ivp # Initial value problem
         self.u = ivp.y0 # Current step approximation
