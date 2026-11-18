@@ -256,23 +256,22 @@ class RK34(Solver):
         self.grid.append(tn)
         self.us.append(self.u)
 
-        # Loop until you hit T
-        # TODO There is an issue with this implementation. We are incrementing tn first before
-        # passing it to self.step(). This means we are effectively computing self.step(t_{n+1}, u_{n})
-        # which is incorrect. We should do the following:
-        #   - Figure out the step size, clamped by T
-        #   - Perform the step, computing u_{n+1}
-        #   - Compute t_{n+1} by adding the step size to tn clamped by T
-        #   - Append both u_{n+1} and t_{n+1} to the respective arrays
-        #   - Update h using self.newstep()
-        while tn < self.ivp.T:
-            # Increment tn by h, "clamp by T" and update h if needed
-            tn = min(tn + self.h, self.ivp.T)
-            if tn - self.grid[-1] < self.h:
-                self.h = tn - self.grid[-1]
+        progressing = True
+        while progressing:
+            # Update step size to be no further than T if needed
+            if tn + self.h > self.ivp.T:
+                progressing = False
+                self.h = self.ivp.T - tn
 
             # Perform step
             self.u = self.step(tn, self.u)
+
+            # Update time
+            if progressing:
+                tn += self.h
+            else:
+                tn = self.ivp.T
+            
             self.grid.append(tn)
             self.us.append(self.u)
 
