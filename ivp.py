@@ -119,9 +119,9 @@ class ExplicitEuler(Solver):
 
     def integrate(self):
         self.us[0,:] = self.u
-        for i in range(1, self.N+1):
+        for i in range(self.N):
             self.u = self.step(self.grid[i], self.u)
-            self.us[i,:] = self.u
+            self.us[i+1,:] = self.u
         return self.us
 
 class ImplicitEuler(Solver):
@@ -150,9 +150,9 @@ class ImplicitEuler(Solver):
 
     def integrate(self):
         self.us[0,:] = self.u
-        for i in range(1, self.N+1):
+        for i in range(self.N):
             self.u = self.step(self.grid[i], self.u)
-            self.us[i,:] = self.u
+            self.us[i+1,:] = self.u
         return self.us
 
 class TrapezoidalEuler(Solver):
@@ -184,9 +184,9 @@ class TrapezoidalEuler(Solver):
 
     def integrate(self):
         self.us[0,:] = self.u
-        for i in range(1, self.N+1):
+        for i in range(self.N):
             self.u = self.step(self.grid[i], self.u)
-            self.us[i,:] = self.u
+            self.us[i+1,:] = self.u
         return self.us
 
 class RK4(Solver):
@@ -206,9 +206,9 @@ class RK4(Solver):
 
     def integrate(self):
         self.us[0,:] = self.u
-        for i in range(1, self.N+1):
+        for i in range(self.N):
             self.u = self.step(self.grid[i], self.u)
-            self.us[i,:] = self.u
+            self.us[i+1,:] = self.u
         return self.us
 
 class RK34(Solver):
@@ -257,6 +257,14 @@ class RK34(Solver):
         self.us.append(self.u)
 
         # Loop until you hit T
+        # TODO There is an issue with this implementation. We are incrementing tn first before
+        # passing it to self.step(). This means we are effectively computing self.step(t_{n+1}, u_{n})
+        # which is incorrect. We should do the following:
+        #   - Figure out the step size, clamped by T
+        #   - Perform the step, computing u_{n+1}
+        #   - Compute t_{n+1} by adding the step size to tn clamped by T
+        #   - Append both u_{n+1} and t_{n+1} to the respective arrays
+        #   - Update h using self.newstep()
         while tn < self.ivp.T:
             # Increment tn by h, "clamp by T" and update h if needed
             tn = min(tn + self.h, self.ivp.T)
