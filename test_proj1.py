@@ -5,7 +5,9 @@
 
 ### The Runge-Kutta RK4 method
 
+import time as time
 import numpy as np
+import scipy.integrate as si
 import matplotlib.pyplot as plt
 
 from ivp import *
@@ -467,3 +469,141 @@ def test_van_der_pol_stiffness():
 
     ax.legend(loc="upper left")
     plt.show()
+
+
+# Test Scipy's solve_ivp compared to my RK34 implementation
+def test_scipy_BDF_solver():
+    y0 = np.array([2, 0])
+    mus = [10, 15, 22, 33, 47, 68, 100, 150, 220, 330, 470, 680, 1000, 4000, 10_000, 25_000, 50_000]
+    
+    rtol = 1e-4
+    atol = 1e-8
+
+    fig, ax = setup_plot(
+        title=f"Van der Pol - Using Scipy's BDF solver",
+        xlabel="μ",
+        ylabel="Number of steps",
+    )
+
+    N_steps = []
+    for mu in mus:
+        t0, T = 0, 0.7*mu
+        ivp = VanderPol(t0=t0, T=T, y0=y0, mu=mu)
+
+        result = si.solve_ivp(
+            ivp.f, (t0, T), y0,
+            method="BDF",
+            rtol=rtol, atol=atol,
+        )
+        if not result.success:
+            N_steps.append(0)
+        else:
+            N_steps.append(result.t.shape[0])
+
+    # Plot mu vs N_steps
+    ax.loglog(mus, N_steps, label="BDF")
+    ax.scatter(mus, N_steps)
+    # Plot dashed O(mu**2)
+    rat = N_steps[-1] / (mus[-1] ** 2)
+    ax.loglog(mus, [mu**2*rat for mu in mus], label="$\mathcal{O}(\mu^2)$", linestyle="--", alpha=0.8)
+
+    ax.legend(loc="lower right")
+    plt.show()
+
+def test_scipy_RK45_solver():
+    y0 = np.array([2, 0])
+    mus = [10, 15, 22, 33, 47, 68, 100, 150, 220, 330, 470, 680]
+    
+    rtol = 1e-3
+    atol = 1e-6
+
+    fig, ax = setup_plot(
+        title=f"Van der Pol - Scipy vs My Implementation",
+        xlabel="μ",
+        ylabel="Number of steps",
+    )
+
+    N_steps_mine = []
+    N_steps_scipy = []
+    for mu in mus:
+        t0, T = 0, 0.7*mu
+        ivp = VanderPol(t0=t0, T=T, y0=y0, mu=mu)
+        solver = RK34(ivp=ivp, tol=atol)
+        us = solver.integrate()
+        N_steps_mine.append(us.shape[0])
+
+        result = si.solve_ivp(
+            ivp.f, (t0, T), y0,
+            method="RK45",
+            rtol=rtol, atol=atol,
+        )
+        if not result.success:
+            N_steps_scipy.append(0)
+        else:
+            N_steps_scipy.append(result.t.shape[0])
+
+    # Plot mu vs N_steps
+    line, = ax.loglog(mus, N_steps_mine, label="My RK34")
+    ax.scatter(mus, N_steps_mine, color=line.get_color())
+    line, = ax.loglog(mus, N_steps_scipy, label="Scipy RK34")
+    ax.scatter(mus, N_steps_scipy, color=line.get_color())
+    # Plot dashed O(mu**2)
+    rat = N_steps_scipy[-1] / (mus[-1] ** 2)
+    ax.loglog(mus, [mu**2*rat for mu in mus], label="$\mathcal{O}(\mu^2)$", color="orange", linestyle="--", alpha=0.8)
+
+    ax.legend(loc="upper left")
+    plt.show()
+
+def test_wall_clock_timing():
+    # Run my RK34, Scipy RK45, Scipy BDF on the same problem with mu large, maybe 2500
+    # Record the times of all three and 
+
+    y0 = np.array([2, 0])
+    mu = 750
+    
+    rtol = 1e-3
+    atol = 1e-6
+
+    fig, ax = setup_plot(
+        title=r"Van der Pol - Method Timing $\mu = 750$",
+        xlabel="Method",
+        ylabel="Time (s)",
+    )
+
+    # Setup ivp
+    t0, T = 0, 0.7*mu
+    ivp = VanderPol(t0=t0, T=T, y0=y0, mu=mu)
+
+    # My RK34 method
+    start_time = time.time()
+    solver = RK34(ivp=ivp, tol=atol)
+    solver.integrate()
+    my_rk34_time = time.time() - start_time
+
+    # Scipy RK45 method
+    start_time = time.time()
+    result = si.solve_ivp(
+        ivp.f, (t0, T), y0,
+        method="RK45",
+        rtol=rtol, atol=atol,
+    )
+    assert result.success
+    scipy_rk45_time = time.time() - start_time
+
+    # Scipy BDF method
+    start_time = time.time()
+    result = si.solve_ivp(
+        ivp.f, (t0, T), y0,
+        method="BDF",
+        rtol=rtol, atol=atol,
+    )
+    assert result.success
+    scipy_bdf_time = time.time() - start_time
+
+    names = ["My RK34", "Scipy RK45", "Scipy BDF"]
+    times = [my_rk34_time, scipy_rk45_time, scipy_bdf_time]
+    ax.stem(names, times)
+    ax.set_yscale("log")
+
+    plt.show()
+    
