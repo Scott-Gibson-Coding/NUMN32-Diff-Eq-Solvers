@@ -212,37 +212,47 @@ def test_lotka_is_periodic():
 def test_lotka_mult_starting_points():
     a, b, c, d = 3, 9, 15, 15
     y0s = [
-        np.array([1, 0.2]),
-        np.array([1, 1]),
-        np.array([0.8, 0.9]),
         np.array([0.5, 0.6]),
-        np.array([1.25, 0.8]),
+        np.array([0.8, 0.9]),
         np.array([0.7, 0.2]),
-        np.array([1.3, 0.35]),
+        np.array([1, 0.2]),
+        # np.array([1, 1]),
+        # np.array([1.25, 0.8]),
+        # np.array([1.3, 0.35]),
     ]
     tol = 1e-8
 
-    fig, ax = setup_plot(
+    fig1, ax1 = setup_plot(
         title=f"Lotka Volterra - Phase Portrait\nSolver: RK34, Tol={tol:.3e}",
         xlabel="x",
         ylabel="y"
     )
+    fig2, ax2 = setup_plot(
+        title=f"Lotka Volterra - x component vs time\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="t",
+        ylabel="x"
+    )
 
-    t0, T = 0, 12
+    t0, T = 0, 6
 
     for y0 in y0s:
         ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
         solver = RK34(ivp=ivp, tol=tol)
         us = solver.integrate()
+        grid = solver.grid
 
         # Draw x vs y
-        line, = ax.plot(us[:,0], us[:,1], label=f"Starting Point: {y0}", alpha=0.7)
-        ax.scatter(y0[0], y0[1], color=line.get_color(), alpha=1, s=20, zorder=5)
+        line, = ax1.plot(us[:,0], us[:,1], label=f"Starting Point: {y0}", alpha=0.7)
+        ax1.scatter(y0[0], y0[1], color=line.get_color(), alpha=1, s=20, zorder=5)
+
+        # Draw x vs t
+        ax2.plot(grid, us[:,0], label=f"Starting Point: {y0}", alpha=0.7)
 
     eq_x, eq_y = d/c, a/b
-    ax.scatter(eq_x, eq_y, label="Equilibrium Point", color="black", s=42, zorder=5)
+    ax1.scatter(eq_x, eq_y, label="Equilibrium Point", color="black", s=42, zorder=5)
 
-    ax.legend(loc="upper right")
+    ax1.legend(loc="upper right")
+    ax2.legend(loc="upper right")
     plt.show()
 
 def test_lotka_mult_ivp_values():
@@ -261,10 +271,15 @@ def test_lotka_mult_ivp_values():
     ])
     tol = 1e-8
 
-    fig, ax = setup_plot(
+    fig1, ax1 = setup_plot(
         title=f"Lotka Volterra - Phase Portrait\nSolver: RK34, Tol={tol:.3e}",
         xlabel="x",
         ylabel="y"
+    )
+    fig2, ax2 = setup_plot(
+        title=f"Lotka Volterra - x component vs time\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="t",
+        ylabel="x"
     )
 
     t0, T = 0, 12
@@ -277,14 +292,18 @@ def test_lotka_mult_ivp_values():
         ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
         solver = RK34(ivp=ivp, tol=tol)
         us = solver.integrate()
+        grid = solver.grid
         
-        # Draw x vs y
-        line, = ax.plot(us[:,0], us[:,1], label=f"a, b, c, d = {np.round(val, 2)}", alpha=0.7)
-        ax.scatter(y0[0], y0[1], color=line.get_color(), alpha=1, s=20, zorder=5)
+        # Draw x vs y, and equilibrium point
+        line, = ax1.plot(us[:,0], us[:,1], label=f"a, b, c, d = {np.round(val, 2)}", alpha=0.7)
+        ax1.scatter(y0[0], y0[1], color=line.get_color(), alpha=1, s=20, zorder=5)
+        ax1.scatter(eq_x, eq_y, color=line.get_color(), s=24, zorder=5)
 
-        ax.scatter(eq_x, eq_y, color=line.get_color(), s=24, zorder=5)
+        # Draw x component vs time to show periodic behavior
+        ax2.plot(grid, us[:,0], label=f"a, b, c, d = {np.round(val, 2)}", alpha=0.7)
 
-    ax.legend(loc="upper right")
+    ax1.legend(loc="upper right")
+    ax2.legend(loc="upper right")
     plt.show()
 
 def test_lotka_1000_cycles():
