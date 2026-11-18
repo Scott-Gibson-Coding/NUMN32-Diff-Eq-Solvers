@@ -160,17 +160,15 @@ def test_RK34_LTE_2x2():
     ys = np.array([ivp.exact(t) for t in ts])
     ax.plot(ys[:,0], ys[:,1], color="black", alpha=0.5, linestyle="-", label=f"Exact Solution")
     
-    plt.legend(loc="upper right")
+    plt.legend(loc="upper left")
     plt.show()
 
 
 ### The nonstiff Lotka-Volterra problem (population dynamics)
 
 def test_lotka_is_periodic():
-    # TODO Plot also, the equalibrium point (in red) and the starting point (in green/blue)
-    
     a, b, c, d = 3, 9, 15, 15
-    y0 = np.array([1.5, 0.2])
+    y0 = np.array([1, 1])
     t0, T = 0, 12
     ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
 
@@ -182,7 +180,7 @@ def test_lotka_is_periodic():
         ylabel="x/y",
     )
     fig2, ax2 = setup_plot(
-        title="Lotka Volterra - x vs y\nSolver: RK34, Tol={tol:.3e}",
+        title=f"Lotka Volterra - Phase Portrait\nSolver: RK34, Tol={tol:.3e}",
         xlabel="x",
         ylabel="y"
     )
@@ -200,10 +198,91 @@ def test_lotka_is_periodic():
     ax1.plot(grid, us[:,1], label="y", **plot_args)
 
     # Draw x vs y
-    ax2.plot(us[:,0], us[:,1], label=f"Solver: RK34 - Tol={tol:.3e}")
+    ax2.scatter(y0[0], y0[1], label="Starting Point", color="blue", s=20, zorder=5)
+    eq_x, eq_y = d/c, a/b
+    ax2.scatter(eq_x, eq_y, label="Equilibrium Point", color="black", s=42, zorder=5)
+    ax2.plot(us[:,0], us[:,1], label=f"RK34 - Tol={tol:.3e}")
 
-    fig1.legend(loc="upper right")
-    fig2.legend(loc="upper right")
+    ax1.legend(loc="upper right")
+    ax2.legend(loc="upper right")
+    plt.show()
+
+def test_lotka_mult_starting_points():
+    a, b, c, d = 3, 9, 15, 15
+    y0s = [
+        np.array([1, 0.2]),
+        np.array([1, 1]),
+        np.array([0.8, 0.9]),
+        np.array([0.5, 0.6]),
+        np.array([1.25, 0.8]),
+        np.array([0.7, 0.2]),
+        np.array([1.3, 0.35]),
+    ]
+    tol = 1e-8
+
+    fig, ax = setup_plot(
+        title=f"Lotka Volterra - Phase Portrait\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="x",
+        ylabel="y"
+    )
+
+    t0, T = 0, 12
+
+    for y0 in y0s:
+        ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
+        solver = RK34(ivp=ivp, tol=tol)
+        us = solver.integrate()
+
+        # Draw x vs y
+        line, = ax.plot(us[:,0], us[:,1], label=f"Starting Point: {y0}", alpha=0.7)
+        ax.scatter(y0[0], y0[1], color=line.get_color(), alpha=1, s=20, zorder=5)
+
+    eq_x, eq_y = d/c, a/b
+    ax.scatter(eq_x, eq_y, label="Equilibrium Point", color="black", s=42, zorder=5)
+
+    ax.legend(loc="upper right")
+    plt.show()
+
+def test_lotka_mult_ivp_values():
+    # vals = np.random.random((6, 4))*15 + 3
+    vals = np.array([
+        [12, 3, 3, 3],
+        [3, 12, 3, 3],
+        [3, 3, 12, 3],
+        [3, 3, 3, 12],
+    ])
+    y0s = np.array([
+        [2, 4],
+        [2, 0.25],
+        [1, 1],
+        [3, 3],
+    ])
+    tol = 1e-8
+
+    fig, ax = setup_plot(
+        title=f"Lotka Volterra - Phase Portrait\nSolver: RK34, Tol={tol:.3e}",
+        xlabel="x",
+        ylabel="y"
+    )
+
+    t0, T = 0, 12
+
+    for val, y0 in zip(vals, y0s):
+        # Compute starting point close to eq point
+        a, b, c, d = val
+        eq_x, eq_y = d/c, a/b
+
+        ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
+        solver = RK34(ivp=ivp, tol=tol)
+        us = solver.integrate()
+        
+        # Draw x vs y
+        line, = ax.plot(us[:,0], us[:,1], label=f"a, b, c, d = {np.round(val, 2)}", alpha=0.7)
+        ax.scatter(y0[0], y0[1], color=line.get_color(), alpha=1, s=20, zorder=5)
+
+        ax.scatter(eq_x, eq_y, color=line.get_color(), s=24, zorder=5)
+
+    ax.legend(loc="upper right")
     plt.show()
 
 def test_lotka_1000_cycles():
@@ -253,9 +332,9 @@ def test_lotka_stays_near_initial_value():
     tol = 1e-8
 
     fig1, ax1 = setup_plot(
-        title=f"Lotka Volterra - |H(x, y)/H(x0, y0) - 1| vs time\nSolver: RK34, Tol={tol:.3e}",
+        title=r"Lotka Volterra - |H(x, y)/H($x_0$, $y_0$) - 1| vs time",
         xlabel="t",
-        ylabel="|H(x, y)/H(x0, y0) - 1|",
+        ylabel=r"|H(x, y)/H($x_0$, $y_0$) - 1|",
     )
     fig2, ax2 = setup_plot(
         title=f"Lotka Volterra - H(x, y) vs time\nSolver: RK34, Tol={tol:.3e}",
@@ -276,7 +355,7 @@ def test_lotka_stays_near_initial_value():
         "linestyle": "-",
         "alpha": 0.8,
     }
-    ax1.semilogy(grid, H_deltas, **plot_args)
+    ax1.semilogy(grid[1:], H_deltas[1:], **plot_args)
     ax2.plot(grid, Hs, **plot_args)
 
     plt.show()

@@ -264,9 +264,6 @@ class RK34(Solver):
                 self.h = tn - self.grid[-1]
 
             # Perform step
-            # TODO It seems as though I'm passing u_{n-1}, t_{n} to the step function. This may not
-            # be correct, and also may be implemented incorrectly in my other solvers. Solutions are
-            # looking good, but this may be a technically incorrect approach.
             self.u = self.step(tn, self.u)
             self.grid.append(tn)
             self.us.append(self.u)
