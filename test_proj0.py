@@ -4,24 +4,12 @@
 #               Additionally plot scenarios with the Trapezoidal Rule which should
 #               demonstrate better error growth.
 
-import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 
 from ivp import *
 from ivp_run import *
 from plot import setup_plot
-
-@pytest.fixture(autouse=True)
-def cleanup_matplotlib():
-    """
-    Some tests have plots that are shown visually for visual feedback. This ensures
-    the internal plot state between tests are not connected, which may result in false
-    positives for test failures. 
-    """
-    yield
-    print("Closing plots")
-    plt.close("all")
 
 ### Testing the LTE class is set up properly
 
