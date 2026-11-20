@@ -347,7 +347,7 @@ def test_lotka_1000_cycles():
 def test_lotka_stays_near_initial_value():
     a, b, c, d = 3, 9, 15, 15
     y0 = np.array([1.5, 0.4])
-    t0, T = 0, 100
+    t0, T = 0, 2000
     ivp = LotkaVolterra(t0, T, y0, a, b, c, d)
 
     tol = 1e-8
@@ -376,7 +376,7 @@ def test_lotka_stays_near_initial_value():
         "linestyle": "-",
         "alpha": 0.8,
     }
-    ax1.semilogy(grid[1:], H_deltas[1:], **plot_args)
+    ax1.plot(grid[1:], H_deltas[1:], **plot_args)
     ax2.plot(grid, Hs, **plot_args)
 
     plt.show()

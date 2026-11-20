@@ -118,6 +118,9 @@ def test_run_ivp_methods():
         **kwargs,
     )
 
+    ax1.legend(loc="upper right")
+    ax2.legend(loc="upper right")
+    ax3.legend(loc="upper right")
     plt.show()
 
 def test_approx_solutions_scalar():
@@ -146,6 +149,7 @@ def test_approx_solutions_scalar():
         include_exact=True,
     )
 
+    ax.legend(loc="upper right")
     plt.show()
 
 def test_approx_solutions_2x2():
@@ -174,6 +178,7 @@ def test_approx_solutions_2x2():
         include_exact=True,
     )
 
+    ax.legend(loc="upper right")
     plt.show()
 
 def test_approx_solutions_2x2_2():
@@ -202,6 +207,7 @@ def test_approx_solutions_2x2_2():
         include_exact=True,
     )
 
+    ax.legend(loc="upper right")
     plt.show()
 
 def test_approx_solutions_3x3():
@@ -230,6 +236,7 @@ def test_approx_solutions_3x3():
         include_exact=True,
     )
 
+    ax.legend(loc="upper right")
     plt.show()
 
 def test_run_mult_ivp_method():
@@ -305,6 +312,8 @@ def test_err_vs_time_methods():
         **kwargs,
     )
     
+    ax1.legend(loc="upper right")
+    ax2.legend(loc="upper right")
     plt.show()
 
 def test_err_vs_time_ivps():
@@ -353,6 +362,9 @@ def test_err_vs_time_ivps():
         err_type="relative",
         **kwargs,
     )
+
+    ax1.legend(loc="upper right")
+    ax2.legend(loc="upper right")
     
     plt.show()
 
@@ -403,7 +415,9 @@ def test_err_vs_h_methods():
         err_type="relative",
         **kwargs,
     )
-    
+
+    ax1.legend(loc="upper right")
+    ax2.legend(loc="upper right")
     plt.show()
 
 def test_err_vs_h_ivps():
@@ -450,4 +464,6 @@ def test_err_vs_h_ivps():
         **kwargs,
     )
     
+    ax1.legend(loc="upper right")
+    ax2.legend(loc="upper right")
     plt.show()
