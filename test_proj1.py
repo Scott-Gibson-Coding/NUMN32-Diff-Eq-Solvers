@@ -3,8 +3,6 @@
 #               like nonlinear oscillatory systems, the non-stiff Lotka-Volterra population
 #               dynamics problem, and the van der Pol equation.
 
-### The Runge-Kutta RK4 method
-
 import time as time
 import numpy as np
 import scipy.integrate as si
@@ -96,7 +94,7 @@ def test_verify_RK4_error_growth():
     plt.show()
 
 
-### Test RK34 adapative solver
+### Test RK34 adaptive solver
 
 def test_RK34_LTE_scalar():
     """
