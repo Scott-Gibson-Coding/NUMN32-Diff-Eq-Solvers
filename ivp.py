@@ -72,8 +72,7 @@ class VanderPol(IVP):
 
 class Solver():
     # Handles the time-stepping process, given an IVP instance
-    # TODO Default N to a value like 100, so that adaptive grid sizes do not need to specify one.
-    def __init__(self, ivp: IVP, N: int, tol: float = 1e-4, adaptive: bool = False):
+    def __init__(self, ivp: IVP, N: int = 100, tol: float = 1e-4, adaptive: bool = False):
         self.ivp = ivp # Initial value problem
         self.u = ivp.y0 # Current step approximation
         self.N = N # Discretization intervals
@@ -108,6 +107,9 @@ class Solver():
     def integrate(self):
         # Perform N steps using the solver step method.
         # Should return us, but the user can also access through class fields.
+        #
+        # If run a second time, should return the previously integrated value without
+        # integrating again.
         raise NotImplementedError("Subclasses should implement this function!")
 
 class ExplicitEuler(Solver):
@@ -213,8 +215,7 @@ class RK4(Solver):
 
 class RK34(Solver):
     def __init__(self, ivp: IVP, tol: float = 1e-4):
-        # TODO What is the purpose of `N` in an adaptive solver?
-        super().__init__(ivp=ivp, N=100, tol=tol, adaptive=True)
+        super().__init__(ivp=ivp, tol=tol, adaptive=True)
 
         self.k = 4 # Order of convergence
         self.errest = None # Current local error
