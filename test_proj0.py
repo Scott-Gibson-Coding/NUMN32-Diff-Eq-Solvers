@@ -467,3 +467,27 @@ def test_err_vs_h_ivps():
     ax1.legend(loc="upper right")
     ax2.legend(loc="upper right")
     plt.show()
+
+
+### Test multiple integration calls
+
+def test_mult_integration():
+    ivp = LTE(t0=0, T=1, y0=np.array([1, 1]), A=np.array([[-1, 1], [1, -3]]))
+    N = 20
+    
+    solvers: list[Solver] = [
+        ExplicitEuler(ivp, N), 
+        ImplicitEuler(ivp, N),
+        TrapezoidalEuler(ivp, N),
+        RK4(ivp, N),
+        RK34(ivp, tol=1e-6),
+    ]
+
+    for solver in solvers:
+        # Current behavior as of project 1 is that multiple integration calls should
+        # Immediately return the existing `us` without integrating a second time.
+        us1 = solver.integrate()
+        us2 = solver.integrate()
+
+        assert us1.shape == us2.shape
+        assert np.allclose(us1 - us2, np.zeros_like(us1))

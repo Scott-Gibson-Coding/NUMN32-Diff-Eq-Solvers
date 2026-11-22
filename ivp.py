@@ -79,6 +79,7 @@ class Solver():
         self.h = (ivp.T - ivp.t0) / N # Interval length for a fixed grid
         self.tol = tol # Goal error tolerance
         self.adaptive = adaptive # Set to False to ensure a fixed grid
+        self.solved = False # Dynamically set to True if the problem has already been integrated
 
         if not adaptive:
             # Fixed grid size
@@ -91,6 +92,10 @@ class Solver():
             self.grid = []
             self.us = []
 
+    def check_solved(self):
+        # Check if the problem has already been integrated, and return the result.
+        if self.solved:
+            return self.us
 
     def newstep(self, k, hn, errest, errestold):
         # Compute the next step size based on the current and previous local error.
@@ -120,10 +125,16 @@ class ExplicitEuler(Solver):
         return un + self.h * self.ivp.f(tn, un)
 
     def integrate(self):
+        solution = self.check_solved()
+        if solution is not None:
+            return solution
+        
         self.us[0,:] = self.u
         for i in range(self.N):
             self.u = self.step(self.grid[i], self.u)
             self.us[i+1,:] = self.u
+            
+        self.solved = True
         return self.us
 
 class ImplicitEuler(Solver):
@@ -151,10 +162,16 @@ class ImplicitEuler(Solver):
         # return sp_alg.solve(np.eye(A.shape[0]) - self.h * A, un)
 
     def integrate(self):
+        solution = self.check_solved()
+        if solution is not None:
+            return solution
+
         self.us[0,:] = self.u
         for i in range(self.N):
             self.u = self.step(self.grid[i], self.u)
             self.us[i+1,:] = self.u
+
+        self.solved = True
         return self.us
 
 class TrapezoidalEuler(Solver):
@@ -185,10 +202,16 @@ class TrapezoidalEuler(Solver):
         return sp_alg.lu_solve(self.lu_piv, 2*un + h*A@un)
 
     def integrate(self):
+        solution = self.check_solved()
+        if solution is not None:
+            return solution
+        
         self.us[0,:] = self.u
         for i in range(self.N):
             self.u = self.step(self.grid[i], self.u)
             self.us[i+1,:] = self.u
+
+        self.solved = True
         return self.us
 
 class RK4(Solver):
@@ -207,10 +230,16 @@ class RK4(Solver):
         return un + h/6 * (Y1 + 2*Y2 + 2*Y3 + Y4)
 
     def integrate(self):
+        solution = self.check_solved()
+        if solution is not None:
+            return solution
+        
         self.us[0,:] = self.u
         for i in range(self.N):
             self.u = self.step(self.grid[i], self.u)
             self.us[i+1,:] = self.u
+
+        self.solved = True
         return self.us
 
 class RK34(Solver):
@@ -251,6 +280,10 @@ class RK34(Solver):
         return un + h/6 * (Y1 + 4*Y2 + Z3)
 
     def integrate(self):
+        solution = self.check_solved()
+        if solution is not None:
+            return solution
+        
         tn = self.ivp.t0
         
         # Init grid and us with starting point
@@ -282,6 +315,8 @@ class RK34(Solver):
         # Convert the dynamic grid and us to static np arrays
         self.grid = np.array(self.grid)
         self.us = np.vstack(self.us)
+
+        self.solved = True
         return self.us
 
 ### EVALUATOR CLASSES ###
