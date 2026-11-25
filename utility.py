@@ -12,6 +12,14 @@ from typing import get_args, Literal, TypeAlias
 
 ### UTILITY FUNCTIONS
 
+def rms_norm(x, N: int) -> float:
+    """
+    Takes a np array and computes the RMS norm. Which is the Euclidean norm divided by the square root
+    of the size of the array.
+    """
+
+    return np.linalg.norm(x) / np.sqrt(N)
+
 def get_error(y1: t_np.NDArray, y2: t_np.NDArray, err_type: ErrorTypes = "absolute") -> float:
     """
     ## Description

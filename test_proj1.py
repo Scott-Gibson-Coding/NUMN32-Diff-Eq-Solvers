@@ -623,4 +623,3 @@ def test_wall_clock_timing():
     ax.set_yscale("log")
 
     plt.show()
-    

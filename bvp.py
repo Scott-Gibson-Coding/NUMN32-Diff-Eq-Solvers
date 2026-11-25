@@ -1,5 +1,6 @@
 import numpy as np
-import scipy.sparse.linalg as sp_sparse_linalg
+import scipy.sparse as sparse_sp
+import scipy.sparse.linalg as sparse_spla
 
 ### BOUNDARY CONDITIONS
 
@@ -28,12 +29,12 @@ class BC():
 
         Inputs:
             dx: float interval size of points in the grid
-            A: np.array (N x N) Coefficient matrix
+            A: sparse array (N x N) Coefficient matrix
             BCcorr: np.array (N,) Boundary value correction terms
             dir: "left" | "right" Side of the boundary to place the condition.
 
         Outputs:
-            A: np.array (N x N)
+            A: sparse array (N x N)
             BCcorr: np.array (N,)
         """
         raise NotImplementedError("Expect boundary conditions to modify this")
@@ -78,7 +79,7 @@ class Robin(BC):
 
 ### 
 
-def FDMd2dx2 (L: float, BCleft: BC, BCright: BC, N: int = 100):
+def FDMd2dx2(L: float, BCleft: BC, BCright: BC, N: int = 100):
     """
     Compute the Finite Difference Method (FDM) discretization
 
@@ -100,6 +101,9 @@ def FDMd2dx2 (L: float, BCleft: BC, BCright: BC, N: int = 100):
         BCcorr: np.array (N, 1) or (N,) containing boundary condition correction terms.
     """
 
+    # TODO Implement Neumann update() function
+    # TODO Make a test using mixed dir-neu conditions, test that neumann works on both sides
+
     if L <= 0 or N <= 0:
         raise ValueError("Invalid length or discretization size")
 
@@ -108,10 +112,12 @@ def FDMd2dx2 (L: float, BCleft: BC, BCright: BC, N: int = 100):
     grid = np.linspace(dx, L-dx, N)
 
     # Create A
-    sub_diag = np.ones(grid.shape[0] - 1)
-    diag = np.ones(grid.shape[0]) * -2
-    sup_diag = np.ones(grid.shape[0] - 1)
-    A = np.diag(diag) + np.diag(sub_diag, -1) + np.diag(sup_diag, 1)
+    diag = np.ones(N) * -2
+    off_diag = np.ones(N-1)
+    A = sparse_sp.diags_array(
+        [off_diag, diag, off_diag], offsets=[-1, 0, 1],
+        shape=(N, N), format="csr",
+    )
 
     # Create BCcorr
     BCcorr = np.zeros_like(grid)
