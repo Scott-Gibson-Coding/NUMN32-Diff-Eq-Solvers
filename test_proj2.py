@@ -103,3 +103,96 @@ def test_bvp_hom_dirichlet_convergence():
 
     ax.legend(loc="upper right")
     plt.show()
+
+def test_bvp_mixed_dir_neu():
+    """
+    ## Scenario
+
+    Test that mixed dirichlet (left) neumann (right) conditions can approximate a known function.
+    """
+
+    y, f = y_sin_cos, f_sin_cos
+
+    L = 2*np.pi
+    N = 50
+
+    fig, ax = setup_plot(
+        title="Sin/Cos - Mixed Dirichlet/Neumann\nApprox offset slightly to avoid overlap",
+        xlabel="x",
+        ylabel="y",
+    )
+
+    # Draw real solution (we will slightly offset the dir-neu solutions)
+    x = np.linspace(0, L, 100)
+    y = np.array(y(x))
+    ax.plot(x, y, color="green", label="Real solution", alpha=0.5)
+
+    # Solve with Neumann (right)
+    dx, grid, A, BCcorr = FDMd2dx2(L, Dirichlet(2), Neumann(-2), N)
+    RHS = dx**2 * f(grid) - BCcorr
+    u = sparse_spla.spsolve(A, RHS)
+
+    ax.plot(
+        grid, u+0.02,
+        color="orange", label=f"FDM | Dir-Neu | {N=}", linestyle="--", alpha=0.9,
+    )
+
+    # Solve with Neumann (left)
+    dx, grid, A, BCcorr = FDMd2dx2(L, Neumann(2), Dirichlet(2), N)
+    RHS = dx**2 * f(grid) - BCcorr
+    u = sparse_spla.spsolve(A, RHS)
+
+    ax.plot(
+        grid, u-0.02,
+        color="red", label=f"FDM | Neu-Dir | {N=}", linestyle="--", alpha=0.4,
+    )
+
+    ax.legend(loc="upper right")
+    plt.show()
+
+def test_bvp_mixed_dir_neu_convergence():
+    """
+    ## Scenario
+
+    Graph 1: Plot error from mixed dir-neu conditions (left/right)
+    Graph 2: Plot error from mixed neu-dir conditions (left/right)
+    """
+
+    y, f = y_sin_cos, f_sin_cos
+
+    fig, ax = setup_plot(
+        title="Sin/Cos - Homogenous Dirichlet - Global Error",
+        xlabel="h",
+        ylabel="error (RMS)",
+    )
+
+    L = 2*np.pi
+    Ns = 2**np.arange(1, 16)
+    bc_left = Dirichlet(2)
+    bc_right = Dirichlet(2)
+
+    hs = []
+    errs = []
+    for N in Ns:
+        # Solve using FDM
+        dx, grid, A, BCcorr = FDMd2dx2(L, bc_left, bc_right, N)
+        RHS = dx**2 * f(grid) - BCcorr
+        u = sparse_spla.spsolve(A, RHS)
+
+        # Real solution
+        y_sol = np.array(y(grid))
+
+        # Global error (RMS)
+        hs.append(dx)
+        errs.append(rms_norm(u - y_sol, N))
+
+    # Plot errors
+    ax.loglog(hs, errs, "o-", label="Solution Errors")
+
+    # Plot comparison line
+    offset = 1.5
+    ref_line = offset * errs[0] * (hs / hs[0]) ** (2)
+    ax.loglog(hs, ref_line, "--", label="$\mathcal{O}(\mu^2)$", color="orange")
+
+    ax.legend(loc="upper right")
+    plt.show()

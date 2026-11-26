@@ -18,6 +18,10 @@ class BC():
         if dir not in ["left", "right"]:
             raise ValueError(f"Invalid boundary condition direction, {dir=}.")
 
+    def get_offset(self):
+        """Return in units of `dx` the offset from the boundary node."""
+        raise NotImplementedError("Expect boundary conditions to modify this")
+
     def update(self, dx, A, BCcorr, dir):
         """
         Pass dx, A and BCcorr with a direction. The values at the boundary of A and
@@ -47,6 +51,9 @@ class Dirichlet(BC):
     def __init__(self, value):
         super().__init__(value)
 
+    def get_offset(self):
+        return 1
+
     def update(self, dx, A, BCcorr, dir):
         self._check_dir(dir)
 
@@ -61,10 +68,28 @@ class Dirichlet(BC):
 class Neumann(BC):
     """
     Neumann boundary condition: `Neumann(3) --> y'(x) = 3`
+
+    Using method 2 from the lecture notes, maintaining matrix A symmetry.
     """
 
     def __init__(self, value):
         super().__init__(value)
+
+    def get_offset(self):
+        return 1/2
+    
+    def update(self, dx, A, BCcorr, dir):
+        self._check_dir(dir)
+
+        match dir:
+            case "left":
+                BCcorr[0] = -dx*self.value
+                A[0, 0] = A[0, 0] / 2
+            case "right":
+                BCcorr[-1] = dx*self.value
+                A[-1, -1] = A[-1, -1] / 2
+
+        return A, BCcorr
 
 class Robin(BC):
     """
@@ -101,15 +126,17 @@ def FDMd2dx2(L: float, BCleft: BC, BCright: BC, N: int = 100):
         BCcorr: np.array (N, 1) or (N,) containing boundary condition correction terms.
     """
 
-    # TODO Implement Neumann update() function
-    # TODO Make a test using mixed dir-neu conditions, test that neumann works on both sides
-
     if L <= 0 or N <= 0:
         raise ValueError("Invalid length or discretization size")
 
+    l_off = BCleft.get_offset()
+    r_off = BCright.get_offset()
+
     # Compute grid spacing, and create grid
-    dx = L / (N + 1)
-    grid = np.linspace(dx, L-dx, N)
+    dx = L / (N - 1 + l_off + r_off)
+    grid = np.linspace(l_off*dx, L-r_off*dx, N)
+
+    ### TODO How do we pass the above to the BCs to determine
 
     # Create A
     diag = np.ones(N) * -2
