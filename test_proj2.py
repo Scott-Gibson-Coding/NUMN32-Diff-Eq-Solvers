@@ -161,7 +161,7 @@ def test_bvp_mixed_dir_neu_convergence():
     y, f = y_sin_cos, f_sin_cos
 
     fig, ax = setup_plot(
-        title="Sin/Cos - Homogenous Dirichlet - Global Error",
+        title="Sin/Cos - Mixed Dirichlet/Neumann - Global Error",
         xlabel="h",
         ylabel="error (RMS)",
     )
@@ -171,28 +171,39 @@ def test_bvp_mixed_dir_neu_convergence():
     bc_left = Dirichlet(2)
     bc_right = Dirichlet(2)
 
-    hs = []
-    errs = []
+    dir_neu_hs = []
+    dir_neu_errs = []
+    neu_dir_hs = []
+    neu_dir_errs = []
     for N in Ns:
-        # Solve using FDM
-        dx, grid, A, BCcorr = FDMd2dx2(L, bc_left, bc_right, N)
+        # Solve Dir-Neu using FDM
+        dx, grid, A, BCcorr = FDMd2dx2(L, Dirichlet(2), Neumann(-2), N)
         RHS = dx**2 * f(grid) - BCcorr
-        u = sparse_spla.spsolve(A, RHS)
+        u_neu_right = sparse_spla.spsolve(A, RHS)
 
-        # Real solution
+        # Compute global error (RMS)
         y_sol = np.array(y(grid))
+        dir_neu_hs.append(dx)
+        dir_neu_errs.append(rms_norm(u_neu_right - y_sol, N))
 
-        # Global error (RMS)
-        hs.append(dx)
-        errs.append(rms_norm(u - y_sol, N))
+        # Solve Neu-Dir using FDM
+        dx, grid, A, BCcorr = FDMd2dx2(L, Neumann(2), Dirichlet(2), N)
+        RHS = dx**2 * f(grid) - BCcorr
+        u_neu_left = sparse_spla.spsolve(A, RHS)
+
+        # Compute global error (RMS)
+        y_sol = np.array(y(grid))
+        neu_dir_hs.append(dx)
+        neu_dir_errs.append(rms_norm(u_neu_left - y_sol, N))
 
     # Plot errors
-    ax.loglog(hs, errs, "o-", label="Solution Errors")
+    ax.loglog(dir_neu_hs, np.array(dir_neu_errs) * 1.05, "o-", label="Solution Errors - Neumann (right)", alpha=0.4)
+    ax.loglog(neu_dir_hs, np.array(neu_dir_errs) * 0.95, "o-", label="Solution Errors - Neumann (left)", alpha=0.4)
 
     # Plot comparison line
-    offset = 1.5
-    ref_line = offset * errs[0] * (hs / hs[0]) ** (2)
-    ax.loglog(hs, ref_line, "--", label="$\mathcal{O}(\mu^2)$", color="orange")
+    offset = 1.2
+    ref_line = offset * neu_dir_errs[1] * (neu_dir_hs / neu_dir_hs[1]) ** (2)
+    ax.loglog(neu_dir_hs, ref_line, "--", label="$\mathcal{O}(\mu^2)$", color="orange")
 
     ax.legend(loc="upper right")
     plt.show()
